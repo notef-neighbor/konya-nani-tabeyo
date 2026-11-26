@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今夜なに食べよ？｜お品書きガチャ</title>
+  <meta name="description" content="今夜の晩ごはんを楽しく決める、夜の屋台・居酒屋風お品書きガチャ。定番からちょっと贅沢、変わり種まで収録。自分だけのメニュー追加もできます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 背景のやわらかな提灯の灯り -->
+  <div class="ambient-glow ambient-glow-left" aria-hidden="true"></div>
+  <div class="ambient-glow ambient-glow-right" aria-hidden="true"></div>
+
+  <!-- 紙吹雪・火の粉エフェクト用キャンバス -->
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- 屋台の暖簾（のれん）ヘッダー -->
+  <header class="noren-header">
+    <div class="noren-bar" aria-hidden="true"></div>
+    <div class="noren-slits" aria-hidden="true">
+      <span class="noren-panel">呑</span>
+      <span class="noren-panel">食</span>
+      <span class="noren-panel">処</span>
+      <span class="noren-panel">今</span>
+      <span class="noren-panel">宵</span>
+    </div>
+
+    <div class="header-inner">
+      <div class="lantern lantern-left" aria-hidden="true">
+        <svg viewBox="0 0 60 110" width="44" height="80" fill="none">
+          <line x1="30" y1="0" x2="30" y2="16" stroke="#c89a64" stroke-width="2"/>
+          <rect x="19" y="14" width="22" height="7" rx="2" fill="#2a1b14" stroke="#d49b54" stroke-width="1.2"/>
+          <ellipse cx="30" cy="54" rx="22" ry="34" fill="url(#lanternGradL)" stroke="#b3341f" stroke-width="1.5"/>
+          <path d="M10 40 Q30 46 50 40" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <path d="M8 54 Q30 60 52 54" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <path d="M10 68 Q30 74 50 68" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <text x="30" y="59" text-anchor="middle" fill="#2a120a" font-size="14" font-weight="700" font-family="serif">酒</text>
+          <rect x="20" y="86" width="20" height="7" rx="2" fill="#2a1b14" stroke="#d49b54" stroke-width="1.2"/>
+          <line x1="30" y1="93" x2="30" y2="106" stroke="#d94432" stroke-width="2.5" stroke-linecap="round"/>
+          <defs>
+            <radialGradient id="lanternGradL" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#ffe194"/>
+              <stop offset="55%" stop-color="#f27a30"/>
+              <stop offset="100%" stop-color="#b92e1d"/>
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <div class="title-block">
+        <p class="subtitle">夜の屋台のお品書きルーレット</p>
+        <h1 class="site-title">今夜なに食べよ？</h1>
+      </div>
+
+      <div class="lantern lantern-right" aria-hidden="true">
+        <svg viewBox="0 0 60 110" width="44" height="80" fill="none">
+          <line x1="30" y1="0" x2="30" y2="16" stroke="#c89a64" stroke-width="2"/>
+          <rect x="19" y="14" width="22" height="7" rx="2" fill="#2a1b14" stroke="#d49b54" stroke-width="1.2"/>
+          <ellipse cx="30" cy="54" rx="22" ry="34" fill="url(#lanternGradR)" stroke="#b3341f" stroke-width="1.5"/>
+          <path d="M10 40 Q30 46 50 40" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <path d="M8 54 Q30 60 52 54" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <path d="M10 68 Q30 74 50 68" stroke="#7d1f12" stroke-width="1" opacity="0.55"/>
+          <text x="30" y="59" text-anchor="middle" fill="#2a120a" font-size="14" font-weight="700" font-family="serif">飯</text>
+          <rect x="20" y="86" width="20" height="7" rx="2" fill="#2a1b14" stroke="#d49b54" stroke-width="1.2"/>
+          <line x1="30" y1="93" x2="30" y2="106" stroke="#d94432" stroke-width="2.5" stroke-linecap="round"/>
+          <defs>
+            <radialGradient id="lanternGradR" cx="50%" cy="45%" r="55%">
+              <stop offset="0%" stop-color="#ffe194"/>
+              <stop offset="55%" stop-color="#f27a30"/>
+              <stop offset="100%" stop-color="#b92e1d"/>
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <button id="sound-toggle" class="icon-chip" type="button" aria-pressed="true" title="効果音のオン・オフを切り替え">
+        <span class="chip-dot" aria-hidden="true"></span>
+        <span id="sound-label">効果音：オン</span>
+      </button>
+      <span class="menu-count-badge" id="pool-summary" aria-live="polite">候補：48品</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 気分フィルター -->
+    <section class="filter-bar" aria-label="気分の絞り込み">
+      <div class="filter-pills" role="group" aria-label="カテゴリーで絞り込む">
+        <button type="button" class="filter-pill is-active" data-filter="all">ぜんぶ</button>
+        <button type="button" class="filter-pill" data-filter="everyday">定番ごはん</button>
+        <button type="button" class="filter-pill" data-filter="indulgent">ちょっと贅沢</button>
+        <button type="button" class="filter-pill" data-filter="wildcard">変わり種</button>
+        <button type="button" class="filter-pill" data-filter="custom">マイ追加</button>
+      </div>
+    </section>
+
+    <!-- メインのお品書きステージ（木札ディスプレイ） -->
+    <section class="gacha-stage" aria-label="今夜のごはん結果">
+      <div id="plaque" class="wood-plaque" data-state="idle">
+        <div class="plaque-nail plaque-nail-tl" aria-hidden="true"></div>
+        <div class="plaque-nail plaque-nail-tr" aria-hidden="true"></div>
+        <div class="plaque-nail plaque-nail-bl" aria-hidden="true"></div>
+        <div class="plaque-nail plaque-nail-br" aria-hidden="true"></div>
+
+        <div class="plaque-top-row">
+          <span id="result-stamp" class="hanko-stamp">お品書き</span>
+          <span id="result-category" class="category-tag">まずは一回まわしてみよう</span>
+        </div>
+
+        <div class="plaque-body" aria-live="polite" aria-atomic="true">
+          <p id="result-dish" class="result-dish">今夜の一品は…？</p>
+          <p id="result-comment" class="result-comment">下のボタンを押すと、屋台の大将が今夜のおすすめを選んでくれます。</p>
+        </div>
+      </div>
+
+      <!-- 押したくなる大きなガチャボタン -->
+      <div class="spin-action-wrap">
+        <button id="spin-btn" class="spin-btn" type="button">
+          <span class="spin-btn-glow" aria-hidden="true"></span>
+          <span class="spin-btn-inner">
+            <span class="spin-btn-sub" id="spin-btn-sub">いざ、運まかせ！</span>
+            <span class="spin-btn-main" id="spin-btn-main">今夜のごはんを決める！</span>
+          </span>
+        </button>
+        <p class="shortcut-hint">スペースキーでも回せます</p>
+      </div>
+
+      <!-- 最近の履歴 -->
+      <div id="history-strip" class="history-strip" hidden>
+        <span class="history-label">さっき出た候補：</span>
+        <ul id="history-list" class="history-list"></ul>
+      </div>
+    </section>
+
+    <!-- お品書き管理セクション（追加・削除・確認） -->
+    <section class="manage-section" aria-labelledby="manage-heading">
+      <div class="section-header">
+        <div>
+          <h2 id="manage-heading" class="section-title">お品書きをアレンジする</h2>
+          <p class="section-desc">お気に入りの料理を追加したり、苦手なメニューを外したりできます（ブラウザに自動保存）。</p>
+        </div>
+        <button id="toggle-drawer-btn" class="toggle-drawer-btn" type="button" aria-expanded="false" aria-controls="manage-body">
+          <span id="toggle-drawer-text">お品書きを開く</span>
+          <span class="chevron" aria-hidden="true">▾</span>
+        </button>
+      </div>
+
+      <div id="manage-body" class="manage-body" hidden>
+        <!-- 新規追加フォーム -->
+        <form id="add-form" class="add-form" novalidate>
+          <h3 class="form-heading">新しい一品を追加</h3>
+          <div class="form-grid">
+            <div class="field">
+              <label for="dish-name-input">料理名 <span class="required-mark">必須</span></label>
+              <input
+                id="dish-name-input"
+                type="text"
+                maxlength="40"
+                placeholder="例：ねぎトロ丼、近所の町中華ラーメン"
+                required
+              >
+            </div>
+            <div class="field">
+              <label for="dish-category-select">ジャンル</label>
+              <select id="dish-category-select">
+                <option value="custom">マイ追加</option>
+                <option value="everyday">定番ごはん</option>
+                <option value="indulgent">ちょっと贅沢</option>
+                <option value="wildcard">変わり種</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="dish-comment-input">ひとことコメント（任意）</label>
+            <input
+              id="dish-comment-input"
+              type="text"
+              maxlength="80"
+              placeholder="例：わさび多めで、冷たいお茶と一緒に！"
+            >
+          </div>
+
+          <div class="form-actions">
+            <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
+            <button type="submit" class="add-submit-btn">＋ お品書きに追加する</button>
+          </div>
+        </form>
+
+        <!-- 一覧の検索とリセット -->
+        <div class="list-toolbar">
+          <div class="search-wrap">
+            <label for="menu-search" class="sr-only">メニューを検索</label>
+            <input id="menu-search" type="search" placeholder="メニューを検索（例：カレー、鍋、贅沢…）">
+          </div>
+          <button id="reset-btn" class="reset-btn" type="button">初期リストに戻す</button>
+        </div>
+
+        <!-- お品書き一覧 -->
+        <ul id="menu-list" class="menu-list" aria-label="登録済みのお品書き一覧"></ul>
+        <p id="menu-empty-msg" class="menu-empty-msg" hidden>条件に合うお品書きがありません。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>今夜もおいしい晩ごはんを。｜データはすべてお使いの端末（localStorage）に保存されます。</p>
+  </footer>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
